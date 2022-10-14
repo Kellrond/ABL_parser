@@ -12,6 +12,7 @@ def parseKeyword(file_path:str):
         Source:
             https://docs.progress.com/bundle/openedge-abl-reference-117/page/Keyword-Index.html
     '''
+
     with open(file_path, 'r') as file:
         lines = file.read()
 
@@ -28,7 +29,9 @@ def parseKeyword(file_path:str):
                 'flag': None,
                 'starts_block': False,
                 'category': '',
+                'syntax': '',
                 'note':'',
+                'docs_url': '',
                 'reserved': True if x[1] != '?' else False, 
                 'min_abr': x[2] if x[2] != '?' else None
             } 
@@ -48,7 +51,7 @@ def parseKeyword(file_path:str):
         with open('language/keywords.py', 'w') as file:
             file.write('keywords = [\n')
             # for kw in 
-            [file.write(f"""    {{ 'keyword':"{x['keyword']+'",': <35} 'flag':{ "'"+ x['flag'] + "'," if x['flag'] else 'None,': <8} 'starts_block': {str(x['starts_block'])+",": <6} 'category': {"'"+x['category']+"',": <12} 'note':'{x['note']}', 'reserved':{str(x['reserved'])+',': <6}'min_abr':{"'"+x['min_abr']+"'," if x.get('min_abr', False) else 'None,'} }},\n""") for x in new_keywords]
+            [file.write(f"""    {{ 'keyword':"{x['keyword']+'",': <35} 'flag':{ "'"+ x['flag'] + "'," if x['flag'] else 'None,': <8} 'starts_block': {str(x['starts_block'])+",": <6} 'category': {"'"+x['category']+"',": <12} 'syntax':'{x['syntax']}', 'note':'{x['note']}', 'docs_url':'{x['docs_url']}', 'reserved':{str(x['reserved'])+',': <6}'min_abr':{"'"+x['min_abr']+"'," if x.get('min_abr', False) else 'None,'} }},\n""") for x in new_keywords]
             file.write(']\n\n')
         os.remove('temp/keywords.py.old')
     except Exception as e:
