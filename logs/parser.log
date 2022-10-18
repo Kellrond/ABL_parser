@@ -1,0 +1,9 @@
+2022-10-13 17:04:28.129452	41664	ERROR	modules.db	Db.add() failed to add data to table folders
+2022-10-13 17:04:28.130277	41664	ERROR	modules.db	Traceback (most recent call last):
+2022-10-13 17:04:28.130277	41664	ERROR	modules.db	  File "D:\Progress openedge\modules\db.py", line 343, in add
+2022-10-13 17:04:28.130277	41664	ERROR	modules.db	    cursor.execute(sql, values)
+2022-10-13 17:04:28.130277	41664	ERROR	modules.db	psycopg2.errors.UndefinedColumn: column "split_file_path" of relation "folders" does not exist
+2022-10-13 17:04:28.130277	41664	ERROR	modules.db	LINE 2: ...SERT INTO folders (folder_id, abs_path, rel_path, split_file...
+2022-10-13 17:04:28.130277	41664	ERROR	modules.db	                                                             ^
+2022-10-13 17:04:28.130277	41664	ERROR	modules.db	
+2022-10-13 17:04:28.130277	41664	ERROR	modules.db	

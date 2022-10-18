@@ -1,19 +1,30 @@
+''' In this file there must be at minimum a file keyword.py with a keyword variable in it. 
+    It will generate a new file, but the existing one must be there. Any give the variable a 
+    list while you are there. 
+'''
 import os, shutil
 
+import conf
 from language.keywords import keywords
 
-def parseKeyword(file_path:str):
+def generateKeywords():
+    keywords = __parseKeyword()
+    keywords = __parseUrls(keywords)
+    __rewriteKeywords(keywords)
+
+def __parseKeyword() -> dict:
     ''' List of keywords grabbed from the Progress site to help with parsing.
 
         Reads the text file gathered from the link below and parses it into dictionary. 
         It then compares to the existing dictionary and takes the existing value if different.
-        Writes dictionary back to original python file. 
+        
+        Returns a dictionary for further processing
     
         Source:
             https://docs.progress.com/bundle/openedge-abl-reference-117/page/Keyword-Index.html
     '''
 
-    with open(file_path, 'r') as file:
+    with open(conf.Language.scraped_keywords, 'r') as file:
         lines = file.read()
 
     lines.replace('check mark', 'True')
@@ -29,8 +40,6 @@ def parseKeyword(file_path:str):
                 'flag': None,
                 'starts_block': False,
                 'category': '',
-                'syntax': '',
-                'note':'',
                 'docs_url': '',
                 'reserved': True if x[1] != '?' else False, 
                 'min_abr': x[2] if x[2] != '?' else None
@@ -45,13 +54,83 @@ def parseKeyword(file_path:str):
                 if v != old_kw.get(k, v):
                     keywrd[k] = old_kw.get(k)
 
+    # Include any custom dictionary items from the existing dict
+    for old_keywrd in keywords:
+        if sum([1 for x in new_keywords if x.get('keyword') == old_keywrd['keyword']]) != 1:
+            new_keywords.append(old_keywrd)
+        
+    # Sort the list 
+    new_keywords = sorted(new_keywords, key=lambda d: d['keyword'])
+
+    return new_keywords
+
+
+def __parseUrls(keywords:list) -> list:
+    ''' The links to the documentation are along the left hand side of the page. 
+        Grab those and strip all but the line with the a href tag. 
+
+        Returns a list of dictionaries to be used with the keyword list.
+
+        Params:
+            - keywords: the list of keywords generated with __parseKeywords
+    '''
+    with open(conf.Language.scraped_urls, 'r') as file:
+        # Readlines leaves the \n character in. This is the cleanest way to get the lines
+        lines = file.read().split('\n')
+        
+        links = []
+
+        for l in lines:
+            l = l[9:]
+            url = 'https://docs.progress.com' + l[:l.find('"')]
+            l = l[l.find('>')+1:]
+            keyword = l[:l.find(' ')].replace('(', '').strip()
+            l = l[l.find(' ')+1:]
+            category = l[:l.find('<')].replace('(','').replace(')', '').strip()
+
+            links.append(
+                {
+                    'docs_url': url,
+                    'keyword': keyword,
+                    'category': category
+                }
+            )
+
+        ## Add URL data to inbound keywords dicts. 
+        for kw in keywords:
+            index = -1
+            for i, link in enumerate(links):
+                if kw['keyword'] == link['keyword']:
+                    index = i
+                    continue
+            if index != -1:
+                data = links.pop(index)
+                kw['docs_url'] = data['docs_url']
+                kw['category'] = data['category']
+
+        return keywords
+
+
+def __rewriteKeywords(keywords:list):
+    ''' Writes the final list of keywords to keywords.py'''
 
     shutil.copy('language/keywords.py', 'temp/keywords.py.old')
+    sng_slash = '\\'
+    dbl_slash = '\\\\'
+    esc_quote = '\\"' 
+
     try:
         with open('language/keywords.py', 'w') as file:
             file.write('keywords = [\n')
-            # for kw in 
-            [file.write(f"""    {{ 'keyword':"{x['keyword']+'",': <35} 'flag':{ "'"+ x['flag'] + "'," if x['flag'] else 'None,': <8} 'starts_block': {str(x['starts_block'])+",": <6} 'category': {"'"+x['category']+"',": <12} 'syntax':'{x['syntax']}', 'note':'{x['note']}', 'docs_url':'{x['docs_url']}', 'reserved':{str(x['reserved'])+',': <6}'min_abr':{"'"+x['min_abr']+"'," if x.get('min_abr', False) else 'None,'} }},\n""") for x in new_keywords]
+            for kw in keywords:
+                keyword = kw['keyword'].replace(sng_slash,dbl_slash).replace('"',esc_quote)+'",'
+                flag    = "'"+ kw['flag'] + "'," if kw['flag'] else 'None,'
+                starts_block = str(kw['starts_block'])+","
+                category = "'"+kw['category']+"',"
+                docs_url = kw['docs_url']
+                reserved = str(kw['reserved'])+','
+                min_abr ="'"+kw['min_abr']+"'," if kw.get('min_abr', False) else 'None,'
+                file.write(f"""    {{ 'keyword':"{keyword: <35} 'flag':{flag: <10} 'starts_block': {starts_block: <6} 'category': {category: <15} 'docs_url':'{docs_url}', 'reserved':{reserved: <6}'min_abr':{min_abr} }},\n""") 
             file.write(']\n\n')
         os.remove('temp/keywords.py.old')
     except Exception as e:
