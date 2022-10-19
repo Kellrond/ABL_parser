@@ -1,1 +1,13 @@
-In Progress® Version 6.0 or later, the ANSI SQL (-Q) startup parameter allows you to redefine the semicolon as a terminator. This startup parameter enforces strict ANSI SQL conformance and allows you to terminate SQL statements with a semicolon. The ANSI SQL (-Q) parameter allows OpenEdge® to run standard SQL statements and scripts built with other products.\n\nThe ANSI SQL (-Q) parameter disables the use of the semicolon within UNIX escapes.
+To get the most speed and efficiency from a system you should
+
+- Find the programs which are called the most 
+- Follow the logic flow and determine what programs are also called. 
+- Run through those programs with the profiler and get some data from that
+
+Parser:
+- Find includes, run and any proceedure calls
+
+Ways to speed things up
+- Find queries which do not use indexes properly
+- Find poor quality code or use of slow methods
+- Reduce number of times a program gets called ie login-info 
