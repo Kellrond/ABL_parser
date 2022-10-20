@@ -34,13 +34,15 @@ def parseFile(rel_path):
     ''' Parses ABL '''
     file_meta = db.queryOne(f"SELECT * FROM files f WHERE f.rel_path = '{rel_path}' ")
 
-    kw_list = [x.get('keyword') for x in keywords ]
 
     if not file_meta:
         return
 
     with open(f"pos/{rel_path}", 'r', encoding='latin_1') as file:
         lines = file.readlines()
+
+    # Get a file list to use ahead
+    file_list = [ x['rel_path'] for x in db.query('SELECT rel_path FROM files;')]
 
     parsed_lines = []      
     in_comment = False  
@@ -107,11 +109,31 @@ def parseFile(rel_path):
             else:
                 first_word = ''
             
-            if first_word in kw_list:
-                kw = [ x for x in keywords if x['keyword'] == first_word ][0]
-
-                if kw.get('flag') != None:
+            # Flag ABL keywords
+            flag_keywords = [ x for x in keywords if x['flag'] != None ]
+            for kw in flag_keywords:
+                if first_word == kw['keyword']:
                     flags.append(kw['flag'])
+                    break
+                elif kw['abr_len'] != 0 and first_word[:kw['abr_len']] == kw['min_abr'] and first_word in kw['keyword']:
+                    flags.append(kw['flag'])
+                    break
+
+            # Look for imports 
+            if first_word[0] == '{':
+                close_pos = first_word.find('}')
+                if close_pos != -1:
+                    seek = first_word[1:close_pos].lower()
+                else:
+                    seek = first_word[1:].lower()
+
+                if seek in file_list:
+                    flags.append('import')
+            # Look for runs
+
+
+
+            # if kw.get('flag') != None:
 
 
             ##

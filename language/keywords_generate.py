@@ -114,25 +114,23 @@ def __parseUrls(keywords:list) -> list:
 def __rewriteKeywords(keywords:list):
     ''' Writes the final list of keywords to keywords.py'''
 
-    shutil.copy('language/keywords.py', 'temp/keywords.py.old')
+    shutil.copy('language/keywords.py', 'language/keywords.py.old')
     sng_slash = '\\'
     dbl_slash = '\\\\'
     esc_quote = '\\"' 
 
-    try:
-        with open('language/keywords.py', 'w') as file:
-            file.write('keywords = [\n')
-            for kw in keywords:
-                keyword = kw['keyword'].replace(sng_slash,dbl_slash).replace('"',esc_quote)+'",'
-                flag    = "'"+ kw['flag'] + "'," if kw['flag'] else 'None,'
-                starts_block = str(kw['starts_block'])+","
-                category = "'"+kw['category']+"',"
-                docs_url = kw['docs_url']
-                reserved = str(kw['reserved'])+','
-                min_abr ="'"+kw['min_abr']+"'," if kw.get('min_abr', False) else 'None,'
-                file.write(f"""    {{ 'keyword':"{keyword: <35} 'flag':{flag: <10} 'starts_block': {starts_block: <6} 'category': {category: <15} 'docs_url':'{docs_url}', 'reserved':{reserved: <6}'min_abr':{min_abr} }},\n""") 
-            file.write(']\n\n')
-        os.remove('temp/keywords.py.old')
-    except Exception as e:
-        shutil.copy('temp/keywords.py.old', 'language/keywords.py')
-        raise e
+
+    with open('language/keywords.py', 'w') as file:
+        file.write('keywords = [\n')
+        for kw in keywords:
+            keyword = kw['keyword'].replace(sng_slash,dbl_slash).replace('"',esc_quote)+'"'
+            flag    = "'"+ kw['flag'] + "'" if kw['flag'] else 'None'
+            starts_block = str(kw['starts_block'])
+            category = "'"+kw['category']+"'"
+            docs_url = kw['docs_url']
+            reserved = str(kw['reserved'])
+            min_abr ="'"+kw['min_abr']+"'" if kw.get('min_abr', False) else 'None'
+            abr_len = str(len(kw['min_abr'])) if kw.get('min_abr', False) else '0'
+            # This looks odd because the commas are missing. Mostly they are added 
+            file.write(f"""    {{ 'keyword':"{keyword: <35}, 'flag':{flag: <15}, 'starts_block': {starts_block: <6}, 'category': {category: <20}, 'docs_url':'{docs_url}', 'reserved':{reserved: <6}, 'min_abr':{min_abr},  'abr_len':{abr_len} }},\n""") 
+        file.write(']\n\n')
