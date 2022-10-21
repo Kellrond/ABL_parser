@@ -5,7 +5,7 @@ To get the most speed and efficiency from a system you should
 - Run through those programs with the profiler and get some data from that
 
 Parser:
-- Find includes, run and any proceedure calls
+- Find run procedure calls
 
 Ways to speed things up
 - Find queries which do not use indexes properly
