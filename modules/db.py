@@ -256,8 +256,11 @@ class Db:
         with self.conn.cursor() as cursor:
             cursor.execute(sql)
             records = cursor.fetchall()
+            
             if len(records) == 1:
                 records = records[0]
+            elif records == []:
+                return None
             else:
                 raise Exception('Scalar SQL statements must return only one result')
             cursor.close()

@@ -49,6 +49,8 @@ def parseFile(rel_path):
     with open(f"pos/{rel_path}", 'r', encoding='latin_1') as file:
         lines = file.readlines()
 
+    print(rel_path)
+
     # Get a file list to use ahead
     file_list = [ x['rel_path'] for x in db.query('SELECT rel_path FROM files;')]
 
@@ -216,8 +218,11 @@ def runETL(line, file_id, line_start):
             # If no parameters the line may end with a period. 
             if line[-1] == '.':
                 line = line[:-1]
+            # In ps/pinpad-m.p there is a run 'regis.w' that we have to fix. 
+            if line.find("'") != -1:
+                line = line.replace("'", '')
+            
             run_file_id = db.scalar(f"SELECT f.file_id FROM files f WHERE f.rel_path = '{line}'; ")
-            print(line)
 
             db.add({
                 '__table__': 'runs',
