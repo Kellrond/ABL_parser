@@ -7,3 +7,12 @@
 2022-10-13 17:04:28.130277	41664	ERROR	modules.db	                                                             ^
 2022-10-13 17:04:28.130277	41664	ERROR	modules.db	
 2022-10-13 17:04:28.130277	41664	ERROR	modules.db	
+2022-10-20 16:22:08.582565	21952	ERROR	modules.db	Db.add() failed to add data to table includes
+2022-10-20 16:22:08.583565	21952	ERROR	modules.db	Traceback (most recent call last):
+2022-10-20 16:22:08.583565	21952	ERROR	modules.db	  File "D:\ABL_parser\modules\db.py", line 346, in add
+2022-10-20 16:22:08.583565	21952	ERROR	modules.db	    cursor.execute(sql, values)
+2022-10-20 16:22:08.583565	21952	ERROR	modules.db	psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type integer: ""
+2022-10-20 16:22:08.583565	21952	ERROR	modules.db	LINE 3:                 VALUES (1176, 2232, 16, '')
+2022-10-20 16:22:08.583565	21952	ERROR	modules.db	                                                ^
+2022-10-20 16:22:08.583565	21952	ERROR	modules.db	
+2022-10-20 16:22:08.583565	21952	ERROR	modules.db	

@@ -41,4 +41,26 @@ create table comments
 	comment text, 
 	line_start integer,
 	line_end integer
-)
+);
+
+
+drop table if exists includes;
+create table includes
+(
+	include_id serial primary key,
+	file_id integer, 
+	inc_file_id integer, 
+	line_start integer,
+	arguments text
+);
+
+drop table if exists runs;
+create table runs
+(
+	run_id serial primary key,
+	file_id integer, 
+	run_file_id integer, 
+	line_start integer,
+	procedure text,
+	parameters text
+);

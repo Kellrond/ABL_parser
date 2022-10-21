@@ -6,7 +6,7 @@ from language.keywords import keywords
 log = Log(__name__)
 db = Db()
 
-def debugParserOutput(parsed_lines, start=0, stop=None, second_col='line'):
+def debugParserOutput(parsed_lines, start=0, stop=None, second_col='line', one_col=False):
     ''' Helps to debug the parser 
 
         Params:
@@ -14,6 +14,7 @@ def debugParserOutput(parsed_lines, start=0, stop=None, second_col='line'):
             - start: line to start on
             - stop: line to stop on
             - second_col: sets the content for the second column
+            - one_col: if not false, must select 'trimmed' or 'gathered'
     '''
     if conf.Parser.debug:
         if stop == None:
@@ -27,7 +28,14 @@ def debugParserOutput(parsed_lines, start=0, stop=None, second_col='line'):
                 scnd_col = ', '.join([f'{k}:{v}' for k,v in gDict.items() if k != 'lines' and k != 'file_id'])
             else:
                 scnd_col = str(p.get(second_col))
-            print(f"{p['line_no']: <5}│{scnd_col: <80}│{p['trim_line']: <80}│{p['first_word']: <20}│{' '.join(p['flags']): <10}")
+
+            if one_col != False:
+                if one_col == 'gathered':
+                    print(f"{p['line_no']: <5}│{scnd_col: <80}│{p['first_word']: <20}│{' '.join(p['flags']): <10}")
+                else:
+                    print(f"{p['line_no']: <5}│{p['trim_line']: <80}│{p['first_word']: <20}│{' '.join(p['flags']): <10}")
+            else:   
+                print(f"{p['line_no']: <5}│{scnd_col: <80}│{p['trim_line']: <80}│{p['first_word']: <20}│{' '.join(p['flags']): <10}")
 
 
 def parseFile(rel_path):
@@ -129,8 +137,13 @@ def parseFile(rel_path):
 
                 if seek in file_list:
                     flags.append('import')
-            # Look for runs
+                    includeETL(line, file_id=file_meta['file_id'], line_start=line_no)
+                    ln_before = line[:line.find('{')]
+                    trim_line = ln_before + line[line.find('}')+1:].strip()
 
+            # Look for runs
+            if 'run' in flags:
+                runETL(trim_line, file_id=file_meta['file_id'], line_start=line_no)
 
 
             # if kw.get('flag') != None:
@@ -143,7 +156,7 @@ def parseFile(rel_path):
         if len(gathered['code']) == 0:
             parsed_lines.append({'line_no':line_no, 'gathered': {**gathered}, 'flags': flags, 'first_word': first_word, 'trim_line':trim_line, 'line': line})
         
-    debugParserOutput(parsed_lines)
+    # debugParserOutput(parsed_lines, one_col='trimmed')
 
 @log.performance
 def commentETL(gathered_line:dict):
@@ -157,3 +170,62 @@ def commentETL(gathered_line:dict):
             'line_end': gathered_line['lines'][-1],
         }
     )
+
+@log.performance
+def includeETL(line, file_id, line_start):
+    ''' Adds the include to the database'''
+    line = line[1:line.find('}')]
+    arguments = ''
+    if line.find(' ') != -1:
+        arguments = line[line.find(' ')+1:].strip()
+        line = line[:line.find(' ')]
+
+    inc_file_id = db.scalar(f"SELECT f.file_id FROM files f WHERE f.rel_path = '{line}'; ")
+    db.add({
+        '__table__': 'includes',
+        'file_id': file_id,
+        'inc_file_id': inc_file_id,
+        'line_start': line_start,
+        'arguments': arguments   
+    })
+
+@log.performance
+def runETL(line, file_id, line_start):
+    ''' Currently just handles the extensions below in runs. Does not capture multi line runs yet '''
+    # TODO make this work with multi line runs
+    
+    # TODO deal with local and included procedures
+    
+    # If there are parameters grab those
+    parameters = ''
+    if line.find('(') != -1:
+        parameters = line[line.find('(')+1:]
+        line = line[:line.find('(')]
+        if parameters.find(')') != -1:
+            parameters = parameters[:parameters.find(')')].strip()
+    # Remove 'RUN ' from the trimmed line
+    line = line[4:].strip()
+
+    extensions = ['.p', '.i','.w','.cls','.v','.f','.o','.d']
+    for ext in extensions:
+        if line.find(ext) != -1:
+            procedure = ''
+            if line.find(' ') != -1:
+                procedure = line[line.find(' ')+1:]
+                line = line[:line.find(' ')].strip()
+            # If no parameters the line may end with a period. 
+            if line[-1] == '.':
+                line = line[:-1]
+            run_file_id = db.scalar(f"SELECT f.file_id FROM files f WHERE f.rel_path = '{line}'; ")
+            print(line)
+
+            db.add({
+                '__table__': 'runs',
+                'file_id': file_id, 
+                'run_file_id': run_file_id, 
+                'line_start': line_start,
+                'procedure': procedure,    
+                'parameters': parameters
+            })
+                
+    
